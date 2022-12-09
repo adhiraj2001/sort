@@ -1,0 +1,18 @@
+numpy
+filterpy
+scikit-image
+lap
+
+# pynvim
+# conda install -n base -c conda-forge nb_conda_kernels (base environment)
+# conda install -n myenv -c conda-forge ipykernel (current environment)
+# conda install -n base -c conda-forge jupyterlab_widgets (base)
+# conda install -n myenv -c conda-forge ipywidgets (current environment)
+
+# opencv-python
+# pytorch (follow website conda details)
+# pandas 
+# PyYAML
+# tqdm
+# seaborn
+# gitpython

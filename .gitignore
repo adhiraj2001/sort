@@ -1,2 +1,15 @@
 output/
 mot_benchmark
+
+**/.vscode
+**/.env
+**/__pycache__
+**/.ipynb_checkpoints
+**/node_modules
+
+**/yolov5
+**/MOT2015
+**/Data
+**/runs
+**/Results
+**/pretrained_weights
