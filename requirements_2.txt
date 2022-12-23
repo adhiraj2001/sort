@@ -16,3 +16,8 @@ lap
 # tqdm
 # seaborn
 # gitpython
+
+# (not gonna need)
+# numba
+# scikit-learn
+# scipy

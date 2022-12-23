@@ -20,6 +20,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import matplotlib
+from numpy.random import f
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -96,7 +97,7 @@ class KalmanBoxTracker(object):
   This class represents the internal state of individual tracked objects observed as bbox.
   """
   count = 0
-  def __init__(self,bbox):
+  def __init__(self, bbox):
     """
     Initialises a tracker using initial bounding box.
     """
@@ -110,6 +111,9 @@ class KalmanBoxTracker(object):
     self.kf.P *= 10.
     self.kf.Q[-1,-1] *= 0.01
     self.kf.Q[4:,4:] *= 0.01
+    
+    ## storing confidence score of the detection
+    self.score = bbox[-1]
 
     self.kf.x[:4] = convert_bbox_to_z(bbox)
     self.time_since_update = 0
@@ -120,7 +124,7 @@ class KalmanBoxTracker(object):
     self.hit_streak = 0
     self.age = 0
 
-  def update(self,bbox):
+  def update(self, bbox):
     """
     Updates the state vector with observed bbox.
     """
@@ -128,7 +132,11 @@ class KalmanBoxTracker(object):
     self.history = []
     self.hits += 1
     self.hit_streak += 1
-    self.kf.update(convert_bbox_to_z(bbox))
+    
+    ## storing confidence score of the detection
+    self.score = bbox[-1]
+
+    self.kf.update(convert_bbox_to_z(np.copy(bbox)))
 
   def predict(self):
     """
@@ -141,17 +149,17 @@ class KalmanBoxTracker(object):
     if(self.time_since_update>0):
       self.hit_streak = 0
     self.time_since_update += 1
-    self.history.append(convert_x_to_bbox(self.kf.x))
+    self.history.append(convert_x_to_bbox(self.kf.x, score = self.score))
     return self.history[-1]
 
   def get_state(self):
     """
     Returns the current bounding box estimate.
     """
-    return convert_x_to_bbox(self.kf.x)
+    return convert_x_to_bbox(self.kf.x, score = self.score)
 
 
-def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
+def associate_detections_to_trackers(detections, trackers, iou_threshold=0.3):
   """
   Assigns detections to tracked object (both represented as bounding boxes)
 
@@ -223,13 +231,20 @@ class Sort(object):
     ret = []
     for t, trk in enumerate(trks):
       pos = self.trackers[t].predict()[0]
-      trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
-      if np.any(np.isnan(pos)):
-        to_del.append(t)
+
+      # print(f'pos: {pos}')
+      # print()
+
+      # trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
+      trk[:] = [pos[0], pos[1], pos[2], pos[3], pos[4]]
+
+      # if np.any(np.isnan(pos)):
+      #   to_del.append(t)
+
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
       self.trackers.pop(t)
-    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks, self.iou_threshold)
+    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
 
     # update matched trackers with assigned detections
     for m in matched:
@@ -242,15 +257,21 @@ class Sort(object):
     i = len(self.trackers)
     for trk in reversed(self.trackers):
         d = trk.get_state()[0]
+
         if (trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits):
-          ret.append(np.concatenate((d,[trk.id+1])).reshape(1,-1)) # +1 as MOT benchmark requires positive
+            # ret.append(np.concatenate((d[:4],[trk.id+1, trk.score])).reshape(1,-1)) # +1 as MOT benchmark requires positive
+            ret.append(np.concatenate((d[:4], [trk.id+1, d[4]])).reshape(1,-1)) # +1 as MOT benchmark requires positive
+
         i -= 1
         # remove dead tracklet
         if(trk.time_since_update > self.max_age):
           self.trackers.pop(i)
-    if(len(ret)>0):
+
+    if(len(ret) > 0):
       return np.concatenate(ret)
-    return np.empty((0,5))
+
+    # return np.empty((0,5))
+    return np.empty((0,6))
 
 def parse_args():
     """Parse input arguments."""
@@ -314,10 +335,10 @@ if __name__ == '__main__':
         total_time += cycle_time
 
         for d in trackers:
-          print('%d,%d,%.2f,%.2f,%.2f,%.2f,1,-1,-1,-1'%(frame,d[4],d[0],d[1],d[2]-d[0],d[3]-d[1]),file=out_file)
+          print('%d,%d,%.2f,%.2f,%.2f,%.2f,1,-1,-1,-1'%(frame, d[4], d[0], d[1], d[2]-d[0], d[3]-d[1]), file=out_file)
           if(display):
             d = d.astype(np.int32)
-            ax1.add_patch(patches.Rectangle((d[0],d[1]),d[2]-d[0],d[3]-d[1],fill=False,lw=3,ec=colours[d[4]%32,:]))
+            ax1.add_patch(patches.Rectangle((d[0],d[1]),d[2]-d[0],d[3]-d[1], fill=False, lw=3, ec=colours[d[4] % 32, :]))
 
         if(display):
           fig.canvas.flush_events()

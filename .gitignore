@@ -9,6 +9,8 @@ mot_benchmark
 
 **/yolov5
 **/MOT2015
+**/MOT15
+**/mot_benchmark
 **/Data
 **/runs
 **/Results
