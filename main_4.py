@@ -25,6 +25,8 @@ np.random.seed(0)
 # colours = np.random.rand(32, 3)  # used only for display
 #@ 2
 cmap = plt.get_cmap('tab20b')
+# cmap = plt.get_cmap('tab32b')
+
 # colors = np.array([cmap(i)[:3] for i in np.linspace(0, 1, 20)]) * 255
 colors = np.array([cmap(i)[:3] for i in np.linspace(0, 1, 32)]) * 255
 
@@ -118,7 +120,8 @@ def main():
         for d in trackers:
             # print('%d,%d,%.2f,%.2f,%.2f,%.2f,1,-1,-1,-1'%(frame,d[4],d[0],d[1],d[2]-d[0],d[3]-d[1]),file=out_file)
             
-            d = d.astype(np.int32)
+            # d = d.astype(np.int32) ## don't do this since confidence score is float
+            d[:-1] = d[:-1].astype(np.int32)
             
             # cls = classes[int(cls_pred)]
             obj_id = int(d[4]) ## instead of class name we are using class
