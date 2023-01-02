@@ -16,7 +16,8 @@ import matplotlib.patches as patches
 import time
 import glob
 
-from sort import Sort
+# from sort import Sort
+from sort_2 import Sort_2
 
 np.random.seed(0)
 
@@ -69,7 +70,11 @@ def main():
     iou_threshold = 0.3
 
     # Tracker
-    mot_tracker = Sort(max_age=max_age,
+    # mot_tracker = Sort(max_age=max_age,
+    #                    min_hits=min_hits,
+    #                    iou_threshold=iou_threshold)
+
+    mot_tracker = Sort_2(max_age=max_age,
                        min_hits=min_hits,
                        iou_threshold=iou_threshold)
 
@@ -120,8 +125,8 @@ def main():
         for d in trackers:
             # print('%d,%d,%.2f,%.2f,%.2f,%.2f,1,-1,-1,-1'%(frame,d[4],d[0],d[1],d[2]-d[0],d[3]-d[1]),file=out_file)
             
-            # d = d.astype(np.int32) ## don't do this since confidence score is float
-            d[:-1] = d[:-1].astype(np.int32)
+            # d = d.astype(np.int32)
+            d[:-1] = d[:-1].astype(np.int32) # when the last index is confidence score
             
             # cls = classes[int(cls_pred)]
             obj_id = int(d[4]) ## instead of class name we are using class
