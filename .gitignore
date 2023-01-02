@@ -12,6 +12,7 @@ mot_benchmark
 **/MOT15
 **/mot_benchmark
 **/Data
+**/Output
 **/runs
 **/Results
 **/pretrained_weights
